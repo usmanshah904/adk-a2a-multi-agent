@@ -15,6 +15,13 @@ structured research brief over A2A, and replies with its own concise summary.
 
 ## Demo
 
+A real run, recorded in the ADK web UI: the question goes to the Summary Agent, which calls the remote `research_agent`
+over A2A, gets the brief back, answers, and the trace shows the A2A transport. (The wait for Gemini is sped up.)
+
+![Recorded demo: question, research_agent call over A2A, final summary, then the trace view](docs/demo.gif)
+
+### Screenshots
+
 A real run in the ADK web UI. The **trace** shows the Summary Agent's model call, the `research_agent` tool call, and
 inside it the `a2a.client` transport spans: the request really leaves the process and goes over A2A to the Research
 Agent before the Summary Agent writes its answer.
