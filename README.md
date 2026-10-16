@@ -1,5 +1,10 @@
 # Research → Summary Agents over A2A
 
+[![tests](https://github.com/usmanshah904/adk-a2a-multi-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/usmanshah904/adk-a2a-multi-agent/actions/workflows/tests.yml)
+![Python](https://img.shields.io/badge/python-3.11%2B-1F4E79)
+![Google ADK](https://img.shields.io/badge/Google%20ADK-2.8-5B5BD6)
+![License: MIT](https://img.shields.io/badge/license-MIT-0891B2)
+
 Two **Google ADK** agents, both powered by **Gemini**, that run as **separate processes** and collaborate over the
 **A2A (Agent-to-Agent) protocol**: real HTTP / JSON-RPC between services, not a Python function call.
 
