@@ -6,10 +6,15 @@ is asked. The A2A transport is added separately in server.py via
 ``to_a2a()``, which wraps this agent in a standard A2A server.
 """
 
+import os
+
 from google.adk.agents.llm_agent import Agent
 
+# Gemini model for this agent; override with GEMINI_MODEL in .env.
+MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+
 root_agent = Agent(
-    model="gemini-3.5-flash",
+    model=MODEL,
     name="research_agent",
     description=(
         "Remote specialist agent that researches a topic and returns a"

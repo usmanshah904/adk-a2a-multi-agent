@@ -1,168 +1,132 @@
-# Research -> Summary Agents (Google ADK + A2A)
+# Research → Summary Agents over A2A
 
-A small, two-agent demo built with **Google's Agent Development Kit (ADK)**
-where the two agents are **separate processes** that talk to each other over
-the **A2A (Agent-to-Agent) protocol** -- real HTTP/JSON-RPC, not a Python
-function call.
+Two **Google ADK** agents, both powered by **Gemini**, that run as **separate processes** and collaborate over the
+**A2A (Agent-to-Agent) protocol**: real HTTP / JSON-RPC between services, not a Python function call.
 
-```
-User
-  -> Summary Agent (ADK, Gemini)      [process A, your terminal / adk web]
-  -> A2A (HTTP JSON-RPC)
-  -> Research Agent (ADK, Gemini)     [process B, uvicorn server, port 8001]
-  -> research result
-  -> Summary Agent
-  -> final answer
-```
+The user talks to a **Summary Agent**. It delegates every research question to a remote **Research Agent**, receives a
+structured research brief over A2A, and replies with its own concise summary.
 
-## What ADK is doing
+![Architecture: the Summary Agent discovers the Research Agent's Agent Card, sends message/send over A2A, and receives a research brief](docs/architecture.svg)
 
-Both agents are ordinary **`google.adk.agents.llm_agent.Agent`** instances
-backed by Gemini (`gemini-3.5-flash`). ADK handles the LLM call, the
-tool-calling loop, and session/event bookkeeping for each agent. Nothing
-about being "the remote one" or "the caller" is special-cased in the model
--- it's just a `name`, `description` and `instruction`.
+## Demo
 
-## What A2A is doing
+A real run in the ADK web UI. The **trace** shows the Summary Agent's model call, the `research_agent` tool call, and
+inside it the `a2a.client` transport spans: the request really leaves the process and goes over A2A to the Research
+Agent before the Summary Agent writes its answer.
 
-A2A is the transport that lets one agent call another **across a process
-boundary**, the same way two microservices would talk over REST:
+![ADK web UI trace: summary_agent calls research_agent, whose a2a.client transport spans show the A2A request](docs/adk-web-traces.png)
 
-- `google.adk.a2a.utils.agent_to_a2a.to_a2a(...)` wraps the Research Agent
-  in a Starlette app that exposes:
-  - a JSON-RPC endpoint that accepts A2A `message/send` requests and runs
-    the wrapped ADK agent,
-  - the standard **Agent Card** at `/.well-known/agent-card.json` --
-    metadata describing the agent's name, description, and how to reach it.
-- `google.adk.agents.remote_a2a_agent.RemoteA2aAgent` is a client-side ADK
-  agent that, given the Research Agent's Agent Card URL, fetches the card
-  and sends real HTTP requests to it whenever it's invoked.
+The same run as **events**: the question, the `research_agent` call, its result, and the final summary.
 
-The Summary Agent never imports `research_agent`'s Python module. It only
-knows an HTTP URL.
+![ADK web UI events: user question, research_agent tool call and result, final summary](docs/adk-web-events.png)
 
-## The Research Agent (`research_agent/`)
+## How it works
 
-- `agent.py` defines `root_agent`, a Gemini-backed `Agent` named
-  `research_agent`. Its instruction tells it that it is **the remote
-  specialist**: given a topic/question, it returns a structured brief
-  (Overview / Key Points / Considerations) and explicitly states that it is
-  the remote Research Agent.
-- `server.py` loads `.env`, wraps `root_agent` with `to_a2a(...)`, and
-  exposes the resulting Starlette app as `a2a_app` on `localhost:8001`.
-  This is the process you start first -- it's a standalone A2A service with
-  no knowledge of the Summary Agent.
+| Piece | What it does |
+| --- | --- |
+| **Research Agent** (`research_agent/`) | A plain ADK `Agent`. `server.py` wraps it with `to_a2a(...)`, which exposes an A2A JSON-RPC endpoint and publishes the standard **Agent Card** at `/.well-known/agent-card.json`. It returns a brief with *Overview*, *Key Points* and *Considerations*. |
+| **Summary Agent** (`summary_agent/`) | The user-facing ADK `Agent`. It holds a `RemoteA2aAgent` (pointed at the Research Agent's Agent Card) wrapped in an `AgentTool`, so the model can call it like a tool. It never imports the Research Agent's code; it only knows a URL. |
+| **A2A** | The transport between them: the Summary Agent reads the Agent Card to discover the remote agent, then sends `message/send` requests over HTTP. |
 
-## The Summary Agent (`summary_agent/`)
+Flow: **User → Summary Agent → A2A (HTTP JSON-RPC) → Research Agent → research brief → Summary Agent → answer.**
 
-- `agent.py` defines `root_agent`, a Gemini-backed `Agent` named
-  `summary_agent`. It builds a `RemoteA2aAgent` pointed at
-  `http://localhost:8001/.well-known/agent-card.json` (the Research Agent's
-  card) and wraps it with `AgentTool` so the model can call it like a tool
-  named `research_agent`.
-- Its instruction explicitly tells it: **whenever the user asks a research
-  question, call the `research_agent` tool** (which sends the request over
-  A2A to the remote agent), then **summarize the returned brief** in its own
-  words for the user, and mention that the research came from the remote
-  agent via A2A.
+### Why A2A instead of a direct function call
 
-## Why A2A instead of a direct Python function call
+- **Process isolation:** the Research Agent can be developed, deployed, scaled or owned by another team independently.
+- **Framework-agnostic:** any A2A-compliant client can call it, and the Summary Agent can call any A2A agent.
+- **Standard discovery:** the Agent Card describes the agent, so the caller needs only its URL, not its internals.
 
-- **Process isolation** -- the Research Agent can be developed, deployed,
-  scaled, restarted, or owned by a different team entirely, independent of
-  the Summary Agent. A function call can't do that; A2A can.
-- **Language/framework agnostic** -- any A2A-compliant client could call the
-  Research Agent, not just this specific ADK agent. Conversely the Summary
-  Agent could call any A2A agent, ADK-based or not, by pointing at its card.
-- **Standardized discovery** -- the Agent Card is a well-known, standard
-  format, so the Summary Agent doesn't need hardcoded knowledge of the
-  Research Agent's internals, only its URL.
-- **This is the point of the exercise** -- Task 6 is specifically about
-  demonstrating real ADK + A2A wiring (`to_a2a` / `RemoteA2aAgent`), which a
-  same-process function call would only fake.
+## Tech stack
 
-## Setup
+Python 3.11+ · Google ADK 2.8 · Gemini · A2A SDK · Uvicorn / Starlette · pytest · GitHub Actions
 
-From the `a2a_research_agents/` directory, with the project's virtual
-environment active (adjust the path/activation for your shell):
+## Getting started
 
-```
-pip install google-adk python-dotenv
+```bash
+git clone https://github.com/usmanshah904/adk-a2a-multi-agent.git
+cd adk-a2a-multi-agent
+
+python -m venv .venv
+# Windows: .venv\Scripts\activate   macOS / Linux: source .venv/bin/activate
+pip install -r requirements.txt
+
+cp .env.example .env    # then add your Gemini API key
 ```
 
-`.env` (already present, **never commit or print it**) must contain:
+Get a free Gemini API key at [Google AI Studio](https://aistudio.google.com/apikey). `.env` is git-ignored; never commit it.
 
+### Run it
+
+The start script launches the Research Agent server, waits until its Agent Card is reachable, runs the Summary Agent,
+and stops the server when you exit.
+
+```bash
+./start.sh          # ADK web UI at http://localhost:8000 (pick "summary_agent")
+./start.sh run      # chat in the terminal
+./start.sh e2e      # live end-to-end A2A test
 ```
-GOOGLE_API_KEY=<your key>
-```
 
-`.gitignore` already excludes `.env`.
+On Windows PowerShell use `.\start.ps1`, `.\start.ps1 run` or `.\start.ps1 e2e`.
 
-## Running the demo
+Try asking: *"What is the A2A (Agent-to-Agent) protocol used for?"*
 
-**1) Start the Research Agent A2A server** (leave this running in its own
-terminal):
+<details>
+<summary>Run the two processes by hand instead</summary>
 
-```
-cd a2a_research_agents
+```bash
+# Terminal 1: Research Agent A2A server
 uvicorn research_agent.server:a2a_app --host localhost --port 8001
+curl http://localhost:8001/.well-known/agent-card.json   # check the Agent Card
+
+# Terminal 2: Summary Agent
+adk web            # or: adk run summary_agent
 ```
 
-Verify its Agent Card is up (in another terminal):
+</details>
 
-```
-curl http://localhost:8001/.well-known/agent-card.json
-```
+### Configuration
 
-**2) Run the Summary Agent**, in a second terminal, from the same
-`a2a_research_agents/` directory:
+All settings are optional except the API key. Put them in `.env`.
 
-```
-adk run summary_agent
-```
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `GOOGLE_API_KEY` | (required) | Gemini API key |
+| `GEMINI_MODEL` | `gemini-3.5-flash` | Model used by both agents |
+| `RESEARCH_AGENT_HOST` | `localhost` | Host the Research Agent server binds to |
+| `RESEARCH_AGENT_PORT` | `8001` | Port of the Research Agent server |
+| `RESEARCH_AGENT_URL` | `http://localhost:8001` | Where the Summary Agent finds the Research Agent |
 
-(or `adk web` to use the ADK dev UI, then pick `summary_agent`.)
+## Tests
 
-**Sample prompt** to type into the Summary Agent:
-
-```
-What is the A2A (Agent-to-Agent) protocol used for?
-```
-
-The Summary Agent will call the remote Research Agent over A2A, then reply
-with its own summary of the research brief it got back.
-
-## End-to-end automated test
-
-`test_e2e.py` proves the whole chain works over real A2A, not a hallucinated
-answer: it checks the Research Agent's Agent Card is reachable, runs the
-Summary Agent through an ADK `InMemoryRunner`, and asserts that a
-`research_agent` tool call and a matching tool response actually occurred
-before the final summary is produced.
-
-With the Research Agent server already running on port 8001:
-
-```
-cd a2a_research_agents
-python test_e2e.py
+```bash
+pip install -r requirements-dev.txt
+pytest -v
 ```
 
-## Architecture diagram
+- **`tests/` (offline, runs in CI):** checks the agent wiring (the Summary Agent's only tool is a `RemoteA2aAgent`,
+  not an import of the Research Agent) and starts the A2A app in-process to confirm it publishes a valid Agent Card.
+  No API key or network needed.
+- **`test_e2e.py` (live):** with the Research Agent server running, sends a real question through the Summary Agent and
+  asserts that a `research_agent` tool call and its response actually happened over A2A before the final answer.
+  Uses your Gemini key. Run it with `./start.sh e2e`.
+
+## Project structure
 
 ```
-+-------------+        A2A (HTTP/JSON-RPC)        +-------------------+
-|             |  ------------------------------->  |                   |
-|   Summary   |   message/send: "research topic"   |     Research      |
-|    Agent    |                                    |       Agent       |
-| (port: n/a, |  <-------------------------------  | (Starlette/uvicorn|
-|  CLI/adk    |   structured research brief text    |   on :8001, via   |
-|    web)     |                                    |    to_a2a(...))   |
-+-------------+                                    +-------------------+
-      ^                                                       |
-      | user question                     Agent Card served at
-      |                                    /.well-known/agent-card.json
-      |
-   +------+
-   | User |
-   +------+
+├── research_agent/
+│   ├── agent.py        # Research Agent (ADK, Gemini)
+│   └── server.py       # exposes it over A2A with to_a2a(); Agent Card
+├── summary_agent/
+│   └── agent.py        # Summary Agent; calls the Research Agent via RemoteA2aAgent
+├── tests/              # offline tests (CI)
+├── test_e2e.py         # live end-to-end A2A test
+├── docs/               # architecture diagram, screenshots
+├── start.sh / start.ps1
+└── .env.example
 ```
+
+> Google ADK marks its A2A integration as experimental, so you may see `[EXPERIMENTAL]` warnings. They are expected.
+
+## License
+
+[MIT](LICENSE) © 2026 Usman Shah

@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" role="img" aria-labelledby="t d">
+  <title id="t">Research and Summary agents over A2A</title>
+  <desc id="d">The user asks the Summary Agent. It discovers the Research Agent's Agent Card, sends the question over A2A as a JSON-RPC message, receives a structured research brief, and replies with a summary.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10Z" fill="#1F4E79"/>
+    </marker>
+    <marker id="arrowMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10Z" fill="#647083"/>
+    </marker>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1F4E79"/>
+      <stop offset="0.55" stop-color="#5B5BD6"/>
+      <stop offset="1" stop-color="#0891B2"/>
+    </linearGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#1F4E79" fill-opacity="0.08"/>
+    </pattern>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    text { font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #142033; }
+    .h { font-size: 22px; font-weight: 700; }
+    .sub { font-size: 14px; fill: #55627a; }
+    .title { font-size: 19px; font-weight: 700; }
+    .line { font-size: 14px; fill: #55627a; }
+    .code { font-family: Consolas, "SF Mono", Menlo, monospace; font-size: 13px; fill: #1F4E79; }
+    .label { font-size: 13px; font-weight: 600; fill: #647083; letter-spacing: 0.04em; }
+    .step { font-size: 13px; font-weight: 700; fill: #ffffff; }
+    .arrowText { font-size: 13px; fill: #142033; }
+    @media (prefers-reduced-motion: reduce) { .live { display: none; } }
+  </style>
+
+  <!-- Background -->
+  <rect width="1200" height="600" rx="20" fill="#F8FAFD"/>
+  <rect width="1200" height="600" rx="20" fill="url(#dots)"/>
+  <rect x="0" y="0" width="1200" height="5" fill="url(#brand)"/>
+
+  <!-- Heading -->
+  <text x="40" y="52" class="h">Research → Summary agents over A2A</text>
+  <text x="40" y="78" class="sub">Google ADK · Gemini · two separate processes that talk over HTTP, not a Python function call</text>
+
+  <!-- User -->
+  <g>
+    <rect x="40" y="252" width="128" height="96" rx="14" fill="#ffffff" stroke="#CFD7E3"/>
+    <circle cx="104" cy="283" r="12" fill="none" stroke="#1F4E79" stroke-width="2.2"/>
+    <path d="M84 322c3-13 11-19 20-19s17 6 20 19" fill="none" stroke="#1F4E79" stroke-width="2.2" stroke-linecap="round"/>
+    <text x="104" y="342" text-anchor="middle" class="title" style="font-size:15px">User</text>
+  </g>
+
+  <!-- Process A -->
+  <rect x="214" y="132" width="364" height="330" rx="18" fill="none" stroke="#CFD7E3" stroke-width="1.5" stroke-dasharray="7 6"/>
+  <text x="236" y="158" class="label">PROCESS A · adk web / adk run</text>
+
+  <rect x="238" y="178" width="316" height="216" rx="16" fill="#ffffff" stroke="#5B5BD6" stroke-width="2"/>
+  <rect x="238" y="178" width="316" height="6" rx="3" fill="#5B5BD6"/>
+  <text x="262" y="220" class="title">Summary Agent</text>
+  <text x="262" y="246" class="line">Google ADK Agent · Gemini</text>
+  <text x="262" y="272" class="line">User-facing coordinator</text>
+  <rect x="262" y="290" width="268" height="30" rx="8" fill="#EEF2FF"/>
+  <text x="276" y="310" class="code">AgentTool(RemoteA2aAgent)</text>
+  <text x="262" y="348" class="line">Delegates research, then writes</text>
+  <text x="262" y="368" class="line">the final summary for the user</text>
+
+  <!-- Process B -->
+  <rect x="742" y="132" width="418" height="330" rx="18" fill="none" stroke="#CFD7E3" stroke-width="1.5" stroke-dasharray="7 6"/>
+  <text x="764" y="158" class="label">PROCESS B · uvicorn · localhost:8001</text>
+
+  <rect x="766" y="178" width="370" height="170" rx="16" fill="#ffffff" stroke="#0891B2" stroke-width="2"/>
+  <rect x="766" y="178" width="370" height="6" rx="3" fill="#0891B2"/>
+  <text x="790" y="220" class="title">Research Agent</text>
+  <text x="790" y="246" class="line">Google ADK Agent · Gemini · remote specialist</text>
+  <rect x="790" y="262" width="150" height="30" rx="8" fill="#ECFEFF"/>
+  <text x="804" y="282" class="code">to_a2a(agent)</text>
+  <text x="790" y="324" class="line">Returns: Overview · Key Points · Considerations</text>
+
+  <rect x="766" y="364" width="370" height="76" rx="14" fill="#ffffff" stroke="#CFD7E3"/>
+  <text x="790" y="396" class="title" style="font-size:16px">Agent Card</text>
+  <text x="790" y="422" class="code">/.well-known/agent-card.json</text>
+
+  <!-- User <-> Summary Agent -->
+  <path d="M168 282 H232" fill="none" stroke="#1F4E79" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <path d="M232 320 H174" fill="none" stroke="#1F4E79" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <text x="182" y="272" class="arrowText" style="font-size:12px">ask</text>
+  <text x="174" y="340" class="arrowText" style="font-size:12px">summary</text>
+
+  <!-- A2A channel -->
+  <rect x="604" y="196" width="112" height="28" rx="14" fill="url(#brand)"/>
+  <text x="660" y="215" text-anchor="middle" class="step" style="font-size:13px">A2A protocol</text>
+  <path d="M556 262 H760" fill="none" stroke="#1F4E79" stroke-width="2.4" marker-end="url(#arrow)"/>
+  <text x="658" y="252" text-anchor="middle" class="arrowText">message/send</text>
+  <text x="658" y="282" text-anchor="middle" class="line" style="font-size:12px">JSON-RPC over HTTP</text>
+  <path d="M760 322 H562" fill="none" stroke="#1F4E79" stroke-width="2.4" marker-end="url(#arrow)"/>
+  <text x="658" y="344" text-anchor="middle" class="arrowText">research brief</text>
+
+  <!-- Discovery path -->
+  <path d="M396 394 V500 H950 V446" fill="none" stroke="#647083" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrowMuted)"/>
+  <text x="674" y="524" text-anchor="middle" class="line">RemoteA2aAgent reads the Agent Card to learn how to reach the Research Agent</text>
+
+  <!-- Step numbers -->
+  <g>
+    <circle cx="396" cy="470" r="13" fill="#647083"/><text x="396" y="475" text-anchor="middle" class="step">1</text>
+    <circle cx="196" cy="296" r="11" fill="#1F4E79"/><text x="196" y="301" text-anchor="middle" class="step" style="font-size:12px">2</text>
+    <circle cx="578" cy="262" r="13" fill="#1F4E79"/><text x="578" y="267" text-anchor="middle" class="step">3</text>
+    <circle cx="738" cy="322" r="13" fill="#1F4E79"/><text x="738" y="327" text-anchor="middle" class="step">4</text>
+  </g>
+
+  <!-- live-flow -->
+  <g class="live">
+  <rect x="762" y="360" width="378" height="84" rx="18" fill="#647083" fill-opacity="0.07"
+        stroke="#647083" stroke-width="5" opacity="0" filter="url(#glow)">
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.1333;0.1667;0.1778;0.2111;1.0000"/>
+  </rect>
+  <rect x="234" y="174" width="324" height="224" rx="20" fill="#5B5BD6" fill-opacity="0.07"
+        stroke="#5B5BD6" stroke-width="5" opacity="0" filter="url(#glow)">
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.2556;0.2889;0.2889;0.3222;1.0000"/>
+  </rect>
+  <rect x="762" y="174" width="378" height="178" rx="20" fill="#0891B2" fill-opacity="0.07"
+        stroke="#0891B2" stroke-width="5" opacity="0" filter="url(#glow)">
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.4333;0.4667;0.5333;0.5667;1.0000"/>
+  </rect>
+  <rect x="234" y="174" width="324" height="224" rx="20" fill="#5B5BD6" fill-opacity="0.07"
+        stroke="#5B5BD6" stroke-width="5" opacity="0" filter="url(#glow)">
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.6778;0.7111;0.7000;0.7333;1.0000"/>
+  </rect>
+  <rect x="36" y="248" width="136" height="104" rx="18" fill="#1F4E79" fill-opacity="0.07"
+        stroke="#1F4E79" stroke-width="5" opacity="0" filter="url(#glow)">
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.7667;0.8000;0.8111;0.8444;1.0000"/>
+  </rect>
+  <circle r="7" fill="#647083" opacity="0" filter="url(#glow)">
+    <animateMotion dur="9.0s" repeatCount="indefinite" path="M396 394 V500 H950 V446"
+      keyPoints="0;0;1;1" keyTimes="0.0000;0.0222;0.1778;1.0000" calcMode="linear"/>
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.0222;0.0389;0.1611;0.1778;1.0000"/>
+  </circle>
+  <circle r="7" fill="#1F4E79" opacity="0" filter="url(#glow)">
+    <animateMotion dur="9.0s" repeatCount="indefinite" path="M168 282 H232"
+      keyPoints="0;0;1;1" keyTimes="0.0000;0.2000;0.2778;1.0000" calcMode="linear"/>
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.2000;0.2167;0.2611;0.2778;1.0000"/>
+  </circle>
+  <circle r="7" fill="#5B5BD6" opacity="0" filter="url(#glow)">
+    <animateMotion dur="9.0s" repeatCount="indefinite" path="M556 262 H760"
+      keyPoints="0;0;1;1" keyTimes="0.0000;0.3000;0.4333;1.0000" calcMode="linear"/>
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.3000;0.3167;0.4167;0.4333;1.0000"/>
+  </circle>
+  <circle r="7" fill="#0891B2" opacity="0" filter="url(#glow)">
+    <animateMotion dur="9.0s" repeatCount="indefinite" path="M760 322 H562"
+      keyPoints="0;0;1;1" keyTimes="0.0000;0.5667;0.7000;1.0000" calcMode="linear"/>
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.5667;0.5833;0.6833;0.7000;1.0000"/>
+  </circle>
+  <circle r="7" fill="#1F4E79" opacity="0" filter="url(#glow)">
+    <animateMotion dur="9.0s" repeatCount="indefinite" path="M232 320 H174"
+      keyPoints="0;0;1;1" keyTimes="0.0000;0.7111;0.7889;1.0000" calcMode="linear"/>
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;1;1;0;0" keyTimes="0.0000;0.7111;0.7278;0.7722;0.7889;1.0000"/>
+  </circle>
+  <circle cx="396" cy="470" r="13" fill="none" stroke="#5B5BD6" stroke-width="2" opacity="0">
+    <animate attributeName="r" dur="9.0s" repeatCount="indefinite"
+      values="13;13;24;24" keyTimes="0.0000;0.0222;0.1222;1.0000"/>
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;0.9;0;0" keyTimes="0.0000;0.0222;0.0278;0.1222;1.0000"/>
+  </circle>
+  <circle cx="196" cy="296" r="13" fill="none" stroke="#5B5BD6" stroke-width="2" opacity="0">
+    <animate attributeName="r" dur="9.0s" repeatCount="indefinite"
+      values="13;13;24;24" keyTimes="0.0000;0.2000;0.3000;1.0000"/>
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;0.9;0;0" keyTimes="0.0000;0.2000;0.2056;0.3000;1.0000"/>
+  </circle>
+  <circle cx="578" cy="262" r="13" fill="none" stroke="#5B5BD6" stroke-width="2" opacity="0">
+    <animate attributeName="r" dur="9.0s" repeatCount="indefinite"
+      values="13;13;24;24" keyTimes="0.0000;0.3000;0.4000;1.0000"/>
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;0.9;0;0" keyTimes="0.0000;0.3000;0.3056;0.4000;1.0000"/>
+  </circle>
+  <circle cx="738" cy="322" r="13" fill="none" stroke="#5B5BD6" stroke-width="2" opacity="0">
+    <animate attributeName="r" dur="9.0s" repeatCount="indefinite"
+      values="13;13;24;24" keyTimes="0.0000;0.5667;0.6667;1.0000"/>
+    <animate attributeName="opacity" dur="9.0s" repeatCount="indefinite"
+      values="0;0;0.9;0;0" keyTimes="0.0000;0.5667;0.5722;0.6667;1.0000"/>
+  </circle>
+  </g>
+
+  <g class="live">
+    <circle cx="1100" cy="47" r="5" fill="#12B76A">
+      <animate attributeName="opacity" dur="1.6s" repeatCount="indefinite" values="1;0.35;1"/>
+    </circle>
+    <text x="1112" y="52" class="label" style="fill:#067647">LIVE FLOW</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="40" y="572" class="line">1 discover · 2 user asks · 3 delegate over A2A · 4 brief returns, Summary Agent replies.   test_e2e.py checks the tool call really went over A2A.</text>
+</svg>

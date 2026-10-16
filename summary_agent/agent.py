@@ -13,13 +13,21 @@ User -> Summary Agent -> A2A -> Research Agent -> result -> Summary Agent ->
 final answer.
 """
 
+import os
+
 from google.adk.agents.llm_agent import Agent
 from google.adk.agents.remote_a2a_agent import RemoteA2aAgent
 from google.adk.tools.agent_tool import AgentTool
 
-# Well-known Agent Card URL for the locally running Research Agent A2A
-# server (see research_agent/server.py, which serves it on port 8001).
-RESEARCH_AGENT_CARD_URL = "http://localhost:8001/.well-known/agent-card.json"
+# Gemini model for this agent; override with GEMINI_MODEL in .env.
+MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+
+# Base URL of the Research Agent's A2A server (research_agent/server.py,
+# localhost:8001 by default); override with RESEARCH_AGENT_URL in .env.
+RESEARCH_AGENT_URL = os.getenv("RESEARCH_AGENT_URL", "http://localhost:8001").rstrip("/")
+
+# The standard, well-known A2A path where the server publishes its Agent Card.
+RESEARCH_AGENT_CARD_URL = f"{RESEARCH_AGENT_URL}/.well-known/agent-card.json"
 
 research_agent = RemoteA2aAgent(
     name="research_agent",
@@ -31,7 +39,7 @@ research_agent = RemoteA2aAgent(
 )
 
 root_agent = Agent(
-    model="gemini-3.5-flash",
+    model=MODEL,
     name="summary_agent",
     description=(
         "User-facing agent that delegates research questions to a remote"

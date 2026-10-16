@@ -1,0 +1,6 @@
+# Runtime dependencies (tested with Python 3.13, google-adk 2.8.0, a2a-sdk 1.1.2)
+google-adk>=2.8,<3
+a2a-sdk[http-server]>=1.1,<2
+python-dotenv>=1.2
+uvicorn>=0.30
+httpx>=0.27

@@ -14,6 +14,7 @@ or simply:
     python -m research_agent.server
 """
 
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -27,8 +28,9 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from .agent import root_agent
 
-HOST = "localhost"
-PORT = 8001
+# Where the A2A server listens; override with RESEARCH_AGENT_HOST / RESEARCH_AGENT_PORT.
+HOST = os.getenv("RESEARCH_AGENT_HOST", "localhost")
+PORT = int(os.getenv("RESEARCH_AGENT_PORT", "8001"))
 
 # A Starlette ASGI app: A2A routes + agent card are mounted at app startup.
 a2a_app = to_a2a(root_agent, host=HOST, port=PORT)
